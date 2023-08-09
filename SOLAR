@@ -1,0 +1,64 @@
+# Use the following link for access to the Sequential Oligogenic Linakge Analysis Routines
+# SOLAR requires a Linux environment to run on.
+http://solar-eclipse-genetics.org/
+# SOLAR manual can be found at 
+https://hpc.nih.gov/docs/solar-8.1.1/00.contents.html
+
+# SOLAR requires two types of files 
+
+# The pedigree file should be in CSV format with the following columns necessary "Pedfile.csv"
+Family ID, Father ID, Mother ID, Individual ID
+
+# Phenotype file should be in CSV format with the following columns necessary. This file may contain multiple related phenotypes. "Phenfile.csv" 
+Family ID, Individual ID, Phenotype A, Phenotype B
+
+# Intialize solar as you have set up your file directory to SOLAR software. The following steps are used in order
+Path/to/your/file
+SOLAR
+
+# Narrow-sense heritability estimates 
+
+
+# Load Pedigree
+Pedigree Pedfile.csv
+
+# Load Phenotype 
+Phenotype Phenfile.csv
+
+# Load trait
+trait Phenotype A 
+
+# Run basic analysis 
+polygenic 
+
+# Output will print to screen.  A directory named after your trait with analysis files will be created for further sructintiy 
+
+## Genetic Correlation 
+
+# Load Pedigree
+Pedigree Pedfile.csv
+
+# Load Phenotype 
+Phenotype Phenfile.csv
+
+# Load trait
+trait Phenotype A, Phenotype B  
+# multiple traits will be run in a pair-wise analysis 
+
+# Load Pedigree
+Pedigree Pedfile.csv
+
+# Load Phenotype 
+Phenotype Phenfile.csv
+
+# Load trait
+trait Phenotype A 
+
+# Run basic analysis 
+polygenic lsysis 
+# Run basic analysis 
+polygenic 
+
+SNP heritability
+
+
