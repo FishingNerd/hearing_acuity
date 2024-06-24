@@ -1,0 +1,146 @@
+CLs and Forrest plots
+Jerry Duran
+2024-02-24
+
+# Load necessary library
+library(dplyr)
+library(tidyr)
+library(gridExtra)
+
+# Your data
+df <- data.frame(
+  Frequency = factor(c(250, 500, 1000, 2000, 3000, 4000, 6000, 8000, "Pure tone average", "High frequency average")),
+  "Narrow.sense.heritability" = c(0.56, 0.46, 0.49, 0.56, 0.36, 0.35, 0.36, 0.26, 0.48, 0.35),
+  "Familial.SNP.heritability" = c(0.31, 0.31, 0.16, 0.35, 0.28, 0.15, 0.3, 0.16, 0.25, 0.17),
+  "Unrelated.SNP.heritability" = c(0.17, 0.15, 0.08, 0.17, 0.12, 0.12, 0.12, 0.07, 0.14, 0.1),
+  "Narrow.sense.SE" = c(0.05, 0.05, 0.07, 0.07, 0.06, 0.04, 0.09, 0.1, 0.11, 0.11),
+  "Familial.SNP.SE" = c(0.06, 0.07, 0.07, 0.08, 0.07, 0.05, 0.08, 0.09, 0.11, 0.11),
+  "Unrelated.SNP.SE" = c(0.14, 0.14, 0.12, 0.11, 0.11, 0.11, 0.13, 0.11, 0.16, 0.17)
+)
+
+
+# Constants
+z_score_95 <- 1.96  # Z-score for 95% confidence
+
+# Function to calculate CI
+calculate_ci <- function(mean, se) {
+  lower_ci <- mean - z_score_95 * se
+  upper_ci <- mean + z_score_95 * se
+  return(c(lower_ci, upper_ci))
+}
+
+# Calculating the CIs for each heritability type
+heritability_types <- c("Narrow.sense", "Familial.SNP", "Unrelated.SNP")
+
+for (heritability_type in heritability_types) {
+  heritability_col <- paste(heritability_type, "heritability", sep = ".")
+  se_col <- paste(heritability_type, "SE", sep = ".")
+  
+  ci_data <- t(apply(df[, c(heritability_col, se_col)], 1, function(x) calculate_ci(x[1], x[2])))
+  df[paste(heritability_type, "Lower.CI", sep = ".")] <- ci_data[, 1]
+  df[paste(heritability_type, "Upper.CI", sep = ".")] <- ci_data[, 2]
+}
+
+# Initialize an empty list to store data frames for each frequency
+data_list <- list()
+
+for (heritability_type in heritability_types) {
+  heritability_col <- paste(heritability_type, "heritability", sep = ".")
+  se_col <- paste(heritability_type, "SE", sep = ".")
+  
+  ci_data <- t(apply(df[, c(heritability_col, se_col)], 1, function(x) calculate_ci(x[1], x[2])))
+  ci_df <- data.frame(
+    Frequency = df$Frequency,
+    Heritability_Type = factor(rep(heritability_type, times = nrow(df)), levels = heritability_types),
+    Lower = ci_data[, 1],
+    Upper = ci_data[, 2]
+  )
+  
+  data_list[[heritability_type]] <- ci_df
+}
+
+# Combine all data frames into one
+combined_data <- bind_rows(data_list)
+
+# Reformat Heritability_Type for better readability
+combined_data$Heritability_Type <- recode(combined_data$Heritability_Type,
+                                          "Narrow.sense" = "Narrow sense heritability",
+                                          "Familial.SNP" = "Familial SNP heritability",
+                                          "Unrelated.SNP" = "Unrelated SNP heritability")
+
+# Function to create and save the forest plot
+create_forest_plot <- function(data, frequency) {
+  # Filter data for the given frequency
+data <- data %>% filter(Frequency == frequency)
+  
+  
+# Loop through each unique frequency in the data
+for(frequency in unique(combined_data$Frequency)) {
+  # Create and save the forest plot
+  create_forest_plot(combined_data, frequency)
+}
+
+##     combine
+# Function to create and save the forest plot
+create_forest_plot <- function(data, frequency) {
+  # Filter data for the given frequency
+  data <- data %>% filter(Frequency == frequency)
+  
+  # Reorder the factor levels of Heritability_Type
+  data$Heritability_Type <- factor(data$Heritability_Type, 
+                                   levels = c("Unrelated SNP heritability", 
+                                              "Familial SNP heritability", 
+                                              "Narrow sense heritability"))
+  
+  # Define the color palette
+  my_palette <- c(
+    "Narrow sense heritability" = "#08519C", 
+    "Familial SNP heritability" = "#3182BD", 
+    "Unrelated SNP heritability" = "#6BAED6"
+  )
+  
+  # Create the forest plot
+  forest_plot <- ggplot(data, aes(x = Heritability_Type, ymin = Lower, ymax = Upper, y = (Lower + Upper) / 2, color = Heritability_Type)) +
+    geom_linerange(linewidth = .75, position = position_dodge(width = 0.5)) +
+    geom_point(size = 1.5, position = position_dodge(width = 0.5)) +
+    geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+    geom_text(aes(label = paste("(", round(Lower, 3), "   ,   ", round(Upper, 3), ")", sep = "")), vjust = -0.5, hjust =0.5, size = 2) +
+    coord_flip() +
+    scale_y_continuous(name = "Heritability", breaks = seq(0, 0.6, by = 0.1)) +
+    scale_x_discrete(limits = rev(c("Narrow sense heritability", "Familial SNP heritability", "Unrelated SNP heritability"))) +
+    scale_color_manual(values = my_palette) +
+    labs(
+      x = NULL,
+      y = NULL,
+      title = paste0(frequency, " (Hz)")) +
+    theme_classic() +
+    theme(
+      plot.title = element_text(size = 6, face = "bold", hjust = 0.5, margin = margin(t = 0)),
+      legend.position = "none",
+      legend.text = element_text(size = 6),
+      legend.title = element_text(size = 8, face = "bold"),
+      axis.title.y = element_blank(),
+      axis.title.x = element_blank(),
+      axis.text.y = element_blank(),
+      axis.text.x = element_text(size = 6, face = "bold", margin = margin(t = 0, r = 0, b = 0, l = 0)),
+      axis.ticks.y = element_blank()
+    ) +
+    guides(color = guide_legend(reverse = TRUE))
+  
+  # Print the forest plot
+  print(forest_plot)
+  
+  # Save the forest plot
+  ggsave(paste0("forest_", frequency, ".png"), plot = forest_plot, width = 2, height = 3, dpi = 600)
+  
+  # Return the forest plot
+  return(forest_plot)
+}
+
+# Create a list to store the forest plots
+forest_plots_list <- list()
+
+# Arrange the forest plots in a grid
+forest<-grid.arrange(grobs = forest_plots_list, ncol = 3, bottom = "Heritability", top ="Per frequency confidence intervals", left ="Familial group", as.table = TRUE, padding = unit(0.5, "line")                   ) 
+
+ggsave("forest.png", plot = forest, dpi = 300)
