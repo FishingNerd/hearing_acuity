@@ -1,0 +1,127 @@
+title: "Correlation Plots"
+author: "Jerry Duran"
+date: "`r Sys.Date()`"
+output: html_document
+
+#r packages
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reshape2)
+
+
+# Split correlation outputs
+
+# Extract unique frequencies from Freq1 and Freq2 columns
+unique_freqs <- unique(c(as.numeric(as.character(full_ped$Freq1)),as.numeric(as.character(full_ped$Freq2))))
+
+# Create a diagonal data frame with unique frequencies
+diag_df <- data.frame(Freq1 = as.factor(unique_freqs), Freq2 = as.factor(unique_freqs), RohG = 1)
+
+# Combine the original full_ped data frame with the diagonal data frame
+full_ped <- rbind(full_ped, diag_df)
+
+# Convert frequencies to numeric values and then back to factors
+full_ped$Freq1 <- as.factor(as.numeric(as.character(full_ped$Freq1)))
+full_ped$Freq2 <- as.factor(as.numeric(as.character(full_ped$Freq2)))
+
+# Reverse the levels of the y-axis factor
+full_ped$Freq1 <- factor(full_ped$Freq1, levels = rev(levels(full_ped$Freq1)))
+
+# Define the color palette
+## Create color palette
+color_palette <- c("blue4","blue","royalblue", "#FFFFFF", "#FFCCCC", "#fe8181", "#fe5757", "#fe2e2e", "#cb2424", "#b62020")
+
+# Define values for the colors
+# Map the first two blue colors to the range -0.25 to -0.15
+# Map the white color to 0
+# Map the rest of the colors to the range 0 to 1, split into six equally spaced intervals
+values <- c(0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
+
+# Create the breaks and labels for the legend
+breaks <- c(-0.30,-0.15, 0,  seq(.14, 1, length.out =5))  # Adjust the range and breaks according to your data
+labels <- round(breaks, digits = 2)
+
+# Create the plot
+full_ped_heat <- ggplot(full_ped, aes(x = Freq2, y = Freq1, fill = RohG)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = color_palette, values = values,
+                       limits = c(-0.30, 1), 
+                       # Adjust the limits according to your data
+                       breaks = breaks, labels = labels,
+                       name = "Genetic Correlation") +
+  scale_x_discrete(position = "top") +
+  labs(x = "Frequency", y = "Frequency") +
+  ggtitle("Full pedigree") +
+  theme_classic() +
+  theme(axis.text.x = element_text(family = "Arial", vjust = 0.5, size = 20, face ="bold", hjust = 0.5, margin =margin(t = 10, r = 0, b = 0, l = 0)),
+        axis.text.y = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 10, r = 0, b = -10, l = 0)),
+        axis.title.y = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 10, r = 10, b = 0, l = 0)),
+        plot.margin = margin(1, 1, 1, 1, "cm"),
+        plot.title = element_text(family = "Arial", size = 20, hjust = 0.5, vjust = 1, face= "bold"),
+        panel.grid.major = element_line(color = "gray", linetype = "dashed"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+ggsave("full_ped_heat.png", plot = full_ped_heat, width = 10, height = 7,dpi = 300)
+# Save the plot as an image
+print(full_ped_heat)
+
+
+#Parents off spring gen2_3
+
+unique_freqs <- unique(c(as.numeric(as.character(sibling_ped$Freq1)), as.numeric(as.character(sibling_ped$Freq2))))
+diag_df <- data.frame(Freq1 = as.factor(unique_freqs), Freq2 = as.factor(unique_freqs), RohG = 1)
+sibling_ped <- rbind(sibling_ped, diag_df)
+
+# Convert frequencies to numeric values and then back to factors
+sibling_ped$Freq1 <- as.factor(as.numeric(as.character(sibling_ped$Freq1)))
+sibling_ped$Freq2 <- as.factor(as.numeric(as.character(sibling_ped$Freq2)))
+
+# Reverse the levels of the y-axis factor
+sibling_ped$Freq1 <- factor(sibling_ped$Freq1, levels = rev(levels(sibling_ped$Freq1)))
+
+## Create color palette
+color_palette <- c("blue4","blue","royalblue", "#FFFFFF", "#FFCCCC", "#fe8181", "#fe5757", "#fe2e2e", "#cb2424", "#b62020")
+
+# Define values for the colors
+# Map the first two blue colors to the range -0.25 to -0.15
+# Map the white color to 0
+# Map the rest of the colors to the range 0 to 1, split into six equally spaced intervals
+values <- c(0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1)
+
+# Create the breaks and labels for the legend
+breaks <- c(-0.30,-0.15, 0,  seq(.14, 1, length.out =5))  # Adjust the range and breaks according to your data
+labels <- round(breaks, digits = 2)
+
+# Create the plot
+sibling_heat <- ggplot(sibling_ped, aes(x = Freq2, y = Freq1, fill = RohG)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = color_palette, values = values,
+                       limits = c(-0.30, 1),  # Adjust the limits according to your data
+                       breaks = breaks, labels = labels,
+                       name = "Genetic Correlation") +
+  scale_x_discrete(position = "top") +
+  labs(x = "Frequency", y = "Frequency") +
+  ggtitle("Siblings") +
+  theme_classic() +
+  theme(axis.text.x = element_text(family = "Arial", vjust = 0.5, size = 20, face ="bold", hjust = 0.5, margin =margin(t = 10, r = 0, b = 0, l = 0)),
+        axis.text.y = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 10, r = 0, b = -10, l = 0)),
+        axis.title.y = element_text(family = "Arial", size = 20, face ="bold", margin = margin(t = 10, r = 10, b = 0, l = 0)),
+        plot.margin = margin(1, 1, 1, 1, "cm"),
+        plot.title = element_text(family = "Arial",face = "bold",  size = 20, hjust = 0.5, vjust = 1),
+        panel.grid.major = element_line(color = "gray", linetype = "dashed"),
+        panel.border = element_rect(color = "black", fill = NA, size = 1))
+
+ggsave("sibling_heat.png", plot = sibling_heat, width = 10, height = 7, dpi = 300)
+# Save the plot as an image
+print(sibling_heat)
+
+
+
+```
+
+
+
+
