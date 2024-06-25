@@ -28,6 +28,9 @@ Phenotype Phenfile.csv
 # Load trait
 trait Phenotype A 
 
+# Covariate
+covariate Age Sex Age*Sex
+
 # Run basic analysis 
 polygenic 
 
@@ -58,7 +61,5 @@ trait Phenotype A
 polygenic lsysis 
 # Run basic analysis 
 polygenic 
-
-SNP heritability
 
 
