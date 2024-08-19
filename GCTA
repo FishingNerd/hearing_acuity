@@ -1,1 +1,21 @@
+# Step 1: Create a Genetic Relationship Matrix (GRM) for the CEPH data
+gcta64 --bfile ceph_data --make-grm --out ceph_grm
+# --bfile: Input PLINK binary file (e.g., ceph_data.bed, ceph_data.bim, ceph_data.fam)
+# --make-grm: Create the GRM
+# --out: Output file prefix for the GRM (ceph_grm)
+
+# Step 2: Run Heritability Analysis using REML for the frequency phenotype
+gcta64 --grm ceph_grm --pheno frequency_phenotype.txt --reml --out frequency_heritability
+# --grm: Input the GRM file created in Step 1 (ceph_grm)
+# --pheno: Phenotype file (frequency_phenotype.txt)
+# --reml: Perform REML analysis for heritability estimation
+# --out: Output file prefix for heritability results (frequency_heritability)
+
+# Step 3: Run Genetic Correlation Analysis between two frequency phenotypes
+gcta64 --grm ceph_grm --pheno frequency1.txt --pheno frequency2.txt --reml-bivar --out frequency_correlation
+# --grm: Input the GRM file created in Step 1 (ceph_grm)
+# --pheno: First phenotype file (frequency1.txt)
+# --pheno: Second phenotype file (frequency2.txt)
+# --reml-bivar: Perform bivariate REML analysis for genetic correlation
+# --out: Output file prefix for genetic correlation results (frequency_correlation)
 
