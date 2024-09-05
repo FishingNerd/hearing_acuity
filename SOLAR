@@ -12,44 +12,51 @@ Family ID, Father ID, Mother ID, Individual ID
 # Phenotype file should be in CSV format with the following columns necessary. This file may contain multiple related phenotypes. "Phenfile.csv" 
 Family ID, Individual ID, Phenotype A, Phenotype B
 
-# Intialize solar as you have set up your file directory to SOLAR software. The following steps are used in order
-Path/to/your/file
-SOLAR
+#Initalize Solar 
+"solar"
+#heritability analysis without loading genetic data
 
-# Narrow-sense heritability estimates 
+#load pedigree
+load pedigree ceph_solar_pedigree.csv
+
+#load phenotype 
+load phenotype best_ear_phenotype.csv
 
 
-# Load Pedigree
-Pedigree Pedfile.csv
+# normalize best ear phenotype traits column headers include (ID,sex,age,250Hzb,500Hzb,1000Hzb,2000Hzb,3000Hzb,4000Hzb,6000Hzb,8000Hzb,PTAB,HiFiB) traits start after age
+define i250 = inomral_250Hzb
+#define which trait to work with 
+trait i250
 
-# Load Phenotype 
-Phenotype Phenfile.csv
+#load covariates
+covariates age sex age*sex
 
-# Load trait
-trait Phenotype A 
+#Perfrom basic heritability analysis
+polygenic -screen
 
-# Covariate
-covariate Age Sex Age*Sex
 
-# Run basic analysis 
-polygenic 
+#Generate a pedigree matrix from SNP data 
 
-# Output will print to screen.  A directory named after your trait with analysis files will be created for further sructintiy 
+pedifromsnps -i (base file name for PLINK .bed/.bim/.fam files)  -o(filename for output file)   --freq (allele frequency file can be made from PLINK or plink_freq in SOLAR)
 
-## Genetic Correlation 
+#load pedigree
+load pedigree solargenerated.phiz
 
-# Load Pedigree
-Pedigree Pedfile.csv
+#load phenotype 
+load phenotype best_ear_phenotype.csv
 
-# Load Phenotype 
-Phenotype Phenfile.csv
 
-# Load trait
-trait Phenotype A, Phenotype B  
-# multiple traits will be run in a pair-wise analysis 
+# normalize best ear phenotype traits column headers include (ID,sex,age,250Hzb,500Hzb,1000Hzb,2000Hzb,3000Hzb,4000Hzb,6000Hzb,8000Hzb,PTAB,HiFiB) traits start after age
+define i250 = inomral_250Hzb
+#define which trait to work with 
+trait i250
 
-# Load Pedigree
-Pedigree Pedfile.csv
+#load covariates
+covariates age sex age*sex
+
+#Perfrom basic heritability analysis
+polygenic -screen
+
 
 # Load Phenotype 
 Phenotype Phenfile.csv
