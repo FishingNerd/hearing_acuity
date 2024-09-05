@@ -1,1 +1,25 @@
 
+#GCTA
+#Calculation: GCTA computes the GRM by comparing the alleles at each SNP across pairs of individuals. The genetic relationship between two individuals is determined by the proportion of #alleles they share, weighted by the frequency of the alleles in the population.
+
+#The input phenotypes are the residuals used by SOLAR for heritability calculations after inverse normalization and accounting for covariates 
+#make grm for heritability estimates
+gcta --bfile final_extracted_data --make-grm --out cephgrm
+
+#Run basic SNP heritability estimates --mpheno is used to specify column number --mpheno 1 = the third column of the phenotype file and the first column with phenotype data
+gcta --grm ceph_all_gen --pheno i250_residuals  --mpheno 1 --reml  --out h2_250
+
+
+
+#unrelated SNP heritability uses the .bed family of files from unrelated individuals "unrelated.bed"
+gcta --bfile unrelated --make-grm --out unrelated_grm
+
+#Run basic SNP heritability estimates on unrelated individuals --mpheno is used to specify column number --mpheno 1 = the third column of the phenotype file and the first column with  #phenotype data
+gcta --grm unrelated --pheno i250_residuals  --mpheno 1 --reml  --out h2_250_ur 
+
+
+#Genetic correlation analysis first files were generated to include the phenotypes of interest; each analysis needs its individual phenotype file 
+gcta --reml-bivar --grm ../gcta_files/allgens --pheno "$file" --out 250_500_gc
+
+# New grms were created with siblings only, and parents-and offspring using the generation split code were used to identify and group parents and, offspring and siblings in the data set
+# PLINK was used to make new bed files with subset of indiviudals, this code can be found under bed_file_prep
