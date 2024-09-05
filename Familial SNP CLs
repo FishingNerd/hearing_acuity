@@ -1,0 +1,42 @@
+# Load the necessary library
+library(ggplot2)
+
+# Define the data and reverse the order of frequencies
+solar_data <- data.frame(
+  Frequency = factor(c(250, 500, 1000, 2000, 3000, 4000, 6000, 8000, "PTA", "HFA"), 
+                     levels = rev(c(250, 500, 1000, 2000, 3000, 4000, 6000, 8000, "PTA", "HFA"))),
+  Narrow_sense = c(0.51, 0.46, 0.36, 0.51, 0.31, 0.3, 0.35, 0.29, 0.47, 0.36),
+  S.E. = c(0.07, 0.08, 0.08, 0.08, 0.08, 0.08, 0.09, 0.07, 0.07, 0.08)
+)
+
+# Calculate the confidence limits
+solar_data$CL_min <- solar_data$Narrow_sense - 1.96 * solar_data$S.E.
+solar_data$CL_max <- solar_data$Narrow_sense + 1.96 * solar_data$S.E.
+
+# Create the plot with reversed order, added confidence interval bounds, and vertical major axis lines
+p <- ggplot(solar_data, aes(x = Narrow_sense, y = Frequency)) +
+  geom_vline(xintercept = seq(0, 1, by = 0.1), color = "grey", linetype = "dashed") +  # Vertical major axis lines
+  geom_point() +
+  geom_errorbarh(aes(xmin = CL_min, xmax = CL_max), height = 0.2) +
+  geom_text(aes(label = paste0("[", round(CL_min, 2), ", ", round(CL_max, 2), "]")),
+            hjust = 0.5, vjust = -0.5, size = 4) +
+  labs(
+    title = "Pedigree-based heritability confidence intervals",
+    x = "Pedigree-based Heritability",
+    y = "Frequency"
+  ) +
+  theme_classic() +
+  theme(plot.title = element_text(size = 22, face = "bold", hjust = 0.5, margin = margin(t = 10)),
+        legend.position = "bottom",
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16, face = "bold"),
+        axis.title.x = element_text(size = 18, face = "bold"),
+        axis.title.y = element_text(size = 18, face ="bold", margin = margin(r = 15)),
+        axis.text.y = element_text(size = 12, face = "bold", margin = margin(t = 0, r = 0, b = 0, l = 0)),
+        axis.ticks.x = element_blank(),
+        panel.spacing.x = unit(1, "cm"),
+        panel.spacing.y = unit(1, "cm"),
+        axis.text.x = element_text(size = 12, face = "bold", hjust = 1, margin = margin(t = 0, r = 0, b = 0, l = 0)))
+ggsave("pedigree-basedCls.png", plot = p, width = 10, height = 8, dpi = 300)
+
+```
