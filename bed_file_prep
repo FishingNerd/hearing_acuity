@@ -1,0 +1,38 @@
+#BCFTOOLS
+#Remove non-SNP variants and non-biallelic SNPS
+bcftools view -m2 -M2 -v snps --threads 4 cephvcf_2024withmissing.vcf.gz -Oz -o filtered_biallelic_snps.vcf.gz
+
+
+#PLINK
+# to make bed files for GCTA for all generations 
+#VCF to BED file
+plink --vcf filtered_biallelic_snps.vcf.gz --make-bed --out cephannoatedallgenerations
+
+#update individual IDs, family relationships, and sex
+#update_newids.txt is a file containing updated family and individual ID information
+plink --bfile cephannoatedallgenerations --update-ids update_newids.txt --make-bed --out tempidupdate
+
+#updatefamily.txt is a file containing family relationship information 
+plink --bfile tempidupdate --update-parents updatefamily.txt --make-bed --out tempfamupdate
+
+#updatesex.txt is file containing updated sex information from individuals
+plink --bfile tempfamupdate --update-sex updatesex.txt --make-bed --out tempsexupdate
+
+#to remove sex/MT chromosomes from the analysis
+plink --bfile tempsexupdate --chr 1-22  --make-bed --out ceph_bed_annotated_allgens
+
+# Filter SNPs for HWE and MAF
+plink --bfile ceph_bed_annotated_allgens --maf 0.01 --hwe 1e-6 --make-bed --out filtered_biallelic_maf_hwe
+
+#Prune for SNP Linkage Disequilibrium 
+plink --bfile filtered_biallelic_maf_hwe --indep-pairwise 50 5 0.5 --out ld_prune
+
+#Apply pruning
+plink --bfile filtered_biallelic_maf_hwe --extract extract_snps.txt --make-bed --out final_extracted_data
+
+
+#using the original code, parse out generation two IDs (code is "Split IDs by generation file") = include.txt, 34 pedigrees with data were manually verified for second generation
+
+plink --bfile ceph_bed_annotated_allgens --keep include.txt --make-bed --out unrelated_bed_annotated
+
+#Having prepared .bed,.bim and .fam files prepare files for gcta
