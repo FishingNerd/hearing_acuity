@@ -35,4 +35,4 @@ plink --bfile filtered_biallelic_maf_hwe --extract extract_snps.txt --make-bed -
 
 plink --bfile ceph_bed_annotated_allgens --keep include.txt --make-bed --out unrelated_bed_annotated
 
-#Having prepared .bed,.bim and .fam files prepare files for gcta
+#Having prepared .bed,.bim and .fam files prepare files for
