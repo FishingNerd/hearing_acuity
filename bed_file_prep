@@ -30,9 +30,4 @@ plink --bfile filtered_biallelic_maf_hwe --indep-pairwise 50 5 0.5 --out ld_prun
 #Apply pruning
 plink --bfile filtered_biallelic_maf_hwe --extract extract_snps.txt --make-bed --out final_extracted_data
 
-
-#using the original code, parse out generation two IDs (code is "Split IDs by generation file") = include.txt, 34 pedigrees with data were manually verified for second generation
-
-plink --bfile ceph_bed_annotated_allgens --keep include.txt --make-bed --out unrelated_bed_annotated
-
-#Having prepared .bed,.bim and .fam files prepare files for gcta
+#Having prepared .bed,.bim and .fam files prepare files for in SOLAR

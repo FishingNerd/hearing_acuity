@@ -1,72 +1,20 @@
-# Use the following link for access to the Sequential Oligogenic Linakge Analysis Routines
-# SOLAR requires a Linux environment to run on.
-http://solar-eclipse-genetics.org/
-# SOLAR manual can be found at 
-https://hpc.nih.gov/docs/solar-8.1.1/00.contents.html
-
-# SOLAR requires two types of files 
-
-# The pedigree file should be in CSV format with the following columns necessary "Pedfile.csv"
-Family ID, Father ID, Mother ID, Individual ID
-
-# Phenotype file should be in CSV format with the following columns necessary. This file may contain multiple related phenotypes. "Phenfile.csv" 
-Family ID, Individual ID, Phenotype A, Phenotype B
+SOLAR
 
 #Initalize Solar 
-"solar"
-#heritability analysis without loading genetic data
-
-#load pedigree
-load pedigree ceph_solar_pedigree.csv
-
-#load phenotype 
-load phenotype best_ear_phenotype.csv
-
-
-# normalize best ear phenotype traits column headers include (ID,sex,age,250Hzb,500Hzb,1000Hzb,2000Hzb,3000Hzb,4000Hzb,6000Hzb,8000Hzb,PTAB,HiFiB) traits start after age
+solar
+#normalize best ear phenotype traits column headers in file include (ID, sex, age, 250Hzb, 500Hzb, 1000Hzb, 2000Hzb, 3000Hzb, 4000Hzb, 6000Hzb, 8000Hzb, PTAB, HiFiB) traits start after age
 define i250 = inomral_250Hzb
 #define which trait to work with 
 trait i250
 
-#load covariates
-covariates age sex age*sex
-
-#Perfrom basic heritability analysis
-polygenic -screen
-
-
 #Generate a pedigree matrix from SNP data 
 
-pedifromsnps -i (base file name for PLINK .bed/.bim/.fam files)  -o(filename for output file)   --freq (allele frequency file can be made from PLINK or plink_freq in SOLAR)
+pedifromsnps -i (base file name for PLINK .bed/.bim/.fam files)  -o (filename for output file)   --freq (allele frequency file can be made from PLINK or plink_freq in SOLAR)
 
 #load pedigree
 load pedigree solargenerated.phiz
 
 #load phenotype 
 load phenotype best_ear_phenotype.csv
-
-
-# normalize best ear phenotype traits column headers include (ID,sex,age,250Hzb,500Hzb,1000Hzb,2000Hzb,3000Hzb,4000Hzb,6000Hzb,8000Hzb,PTAB,HiFiB) traits start after age
-define i250 = inomral_250Hzb
-#define which trait to work with 
-trait i250
-
-#load covariates
-covariates age sex age*sex
-
-#Perfrom basic heritability analysis
-polygenic -screen
-
-
-# Load Phenotype 
-Phenotype Phenfile.csv
-
-# Load trait
-trait Phenotype A 
-
-# Run basic analysis 
-polygenic lsysis 
-# Run basic analysis 
-polygenic 
 
 
