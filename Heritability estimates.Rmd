@@ -1,0 +1,79 @@
+---
+title: "SOLAR narrow-sense heritability"
+author: "Jerry Duran"
+date: "`r Sys.Date()`"
+output: "github_document"
+---
+
+```{r}
+## Load necessary libraries
+library(forcats)
+library(dplyr)
+library(tidyverse)
+library(ggplot2)
+library(reshape2)
+library(RColorBrewer)
+
+# Create the "df" data frame with the new heritability variable
+df <- data.frame(
+  Frequency = factor(c(250, 500, 1000, 2000, 3000, 4000, 6000, 8000, "Puretone Average", "High Frequency Average")),
+  `SOLAR narrow-sense heritability` = c(0.51, 0.45, 0.36, 0.56, 0.35, 0.28, 0.36, 0.30, 0.50, 0.37)
+)
+
+# Create the "se" data frame for the standard errors
+se <- data.frame(
+  Frequency = factor(c(250, 500, 1000, 2000, 3000, 4000, 6000, 8000, "Puretone Average", "High Frequency Average")),
+  `SOLAR empirically derived SE` = c(0.07, 0.07, 0.08, 0.08, 0.09, 0.09, 0.10, 0.07, 0.07, 0.09)
+  )
+
+# Melt the data frames to long format for ggplot
+df_melt <- melt(df, id.vars = "Frequency")
+se_melt <- melt(se, id.vars = "Frequency")
+
+# Add SE column to df_melt
+df_melt$SE <- se_melt$value
+
+# Define the color palette
+my_palette <- c("#6BAED6")
+
+# Add \n for line breaks in the labels
+labels <- c("250", "500", "1000", "2000", "3000", "4000", "6000", "8000", "Puretone\nAverage", "High Frequency\nAverage")
+
+# Force factors to reorder correctly
+df_melt$Frequency <- factor(df_melt$Frequency, levels = c("250", "500", "1000", "2000", "3000", "4000", "6000", "8000", "Puretone Average", "High Frequency Average"))
+
+# Set dodge width for bar spacing
+dodge_width <- 0.8
+
+# Create the bar plot with error bars
+h2_all_try <- ggplot(df_melt, aes(x = Frequency, y = value, fill = variable)) +
+  geom_bar(stat = "identity", position = position_dodge(width = dodge_width), width = 0.8) +
+  geom_errorbar(
+    aes(ymin = value - SE / 2, ymax = value + SE / 2),
+    position = position_dodge(width = dodge_width),
+    width = 0.4
+  ) +
+  scale_fill_manual(values = my_palette, na.value = NA, 
+                    labels = c("SOLAR narrow-sense heritability"),
+                    na.translate = FALSE) +  
+  scale_y_continuous(limits = c(0, 1), expand = expansion(mult = c(0, 0.1)), breaks = seq(0, 1, by = 0.1)) +
+  scale_x_discrete(labels = labels) +  # Use the labels with line breaks
+  labs(x = "Frequency (Hz)", y = "Heritability", fill = "", title = "") +
+  theme_classic() +
+  theme(plot.title = element_text(size = 22, face = "bold", hjust = 0.5, margin = margin(t = 10)),
+        legend.position = "bottom",
+        legend.text = element_text(size = 14),
+        legend.title = element_blank(),  # Remove legend title
+        axis.title.x = element_text(size = 18, face = "bold"),
+        axis.title.y = element_text(size = 18, face = "bold", margin = margin(r = 15)),
+        axis.text.y = element_text(size = 12, face = "bold"),
+        axis.ticks.x = element_blank(),
+        axis.text.x = element_text(size = 12, face = "bold"))
+
+# Print the plot
+print(h2_all_try)
+
+# Save the plot
+ggsave("Solar_narrow_sense_heritability.png", plot = h2_all_try, width = 12, height = 8, dpi = 600)
+
+```

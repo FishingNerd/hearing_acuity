@@ -1,0 +1,201 @@
+---
+title: "CLs for Solar RhoG"
+output: "github_document"
+date: "2024-09-02"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary library
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(gridExtra)
+
+# Define the dataset
+data <- data.frame(
+   Frequency_comparison = c("250|500", "250|1000", "250|2000", "250|3000", "250|4000", "250|6000", 
+                           "250|8000", "500|1000", "500|2000", "500|3000", "500|4000", "500|6000", 
+                           "500|8000", "1000|2000", "1000|3000", "1000|4000", "1000|6000", 
+                           "1000|8000", "2000|3000", "2000|4000", "2000|6000", "2000|8000", 
+                           "3000|4000", "3000|6000", "3000|8000", "4000|6000", "4000|8000", "6000|8000"),
+  
+  All_RhoG = c(0.80, 0.55, 0.75, 0.49, 0.50, 0.15, 
+               0.21, 0.82, 0.90, 0.65, 0.63, 0.12, 
+               0.30, 0.82, 0.60, 0.58, -0.05, 
+               0.15, 0.63, 0.61, 0.07, 0.20, 
+               0.76, 0.54, 0.52, 0.68, 0.61, 0.91),
+  
+  All_SE = c(0.07, 0.12, 0.09, 0.14, 0.15, 0.16, 
+             0.16, 0.08, 0.59, 0.12, 0.14, 0.17, 
+             0.16, 0.07, 0.14, 0.16, 0.19, 
+             0.19, 0.12, 0.14, 0.18, 0.17, 
+             0.11, 0.15, 0.16, 0.12, 0.14, 0.08),
+  
+  Parent_offspring_RhoG = c(0.77, 0.47, 0.70, 0.41, 0.47, 0.10, 
+                            0.12, 0.78, 0.86, 0.60, 0.61, 0.10, 
+                            0.25, 0.76, 0.52, 0.49, -0.10, 
+                            0.00, 0.62, 0.65, 0.14, 0.25, 
+                            0.73, 0.59, 0.60, 0.69, 0.64, 0.97),
+  
+  Parent_offspring_SE = c(0.08, 0.14, 0.10, 0.16, 0.17, 0.17, 
+                          0.17, 0.10, 0.08, 0.14, 0.16, 0.19, 
+                          0.18, 0.10, 0.16, 0.19, 0.20, 
+                          0.20, 0.12, 0.14, 0.18, 0.18, 
+                          0.12, 0.15, 0.15, 0.13, 0.15, 0.07),
+  
+  Siblings_RhoG = c(0.82, 0.52, 0.74, 0.47, 0.64, 0.20, 
+                    0.15, 0.86, 0.93, 0.63, 0.71, 0.09, 
+                    0.26, 0.82, 0.42, 0.49, -0.19, 
+                    0.02, 0.63, 0.62, 0.01, 0.17, 
+                    0.77, 0.49, 0.62, 0.68, 0.58, 0.98),
+  
+  Siblings_SE = c(0.08, 0.16, 0.11, 0.18, 0.16, 0.21, 
+                  0.22, 0.08, 0.06, 0.16, 0.15, 0.23, 
+                  0.22, 0.08, 0.19, 0.20, 0.23, 
+                  0.24, 0.15, 0.16, 0.23, 0.23, 
+                  0.12, 0.19, 0.17, 0.14, 0.18, 0.06)
+)
+
+# Display the updated data frame
+print(data)
+
+```
+
+```{r}
+
+
+# Calculate the confidence intervals
+library(dplyr)
+
+# Assuming 'data' is your initial dataframe and 'new_data' is the dataframe with updated values as provided earlier
+
+# Merge the new data into the old dataframe, making sure the column names match
+data <- data %>%
+  mutate(
+    Full_Pedigree_RhoG = All_RhoG,
+    Full_Pedigree_SE = All_SE,
+    Parent_offspring_RhoG = Parent_offspring_RhoG,
+    Parent_offspring_SE = Parent_offspring_SE,
+    Siblings_RhoG = Siblings_RhoG,
+    Siblings_SE = Siblings_SE
+  )
+
+# Calculate the confidence intervals
+z_value <- 1.96  # For 95% confidence
+
+data <- data %>%
+  mutate(
+    Full_Pedigree_CI_lower = Full_Pedigree_RhoG - z_value * Full_Pedigree_SE,
+    Full_Pedigree_CI_upper = Full_Pedigree_RhoG + z_value * Full_Pedigree_SE,
+    Parent_offspring_CI_lower = Parent_offspring_RhoG - z_value * Parent_offspring_SE,
+    Parent_offspring_CI_upper = Parent_offspring_RhoG + z_value * Parent_offspring_SE,
+    Siblings_CI_lower = Siblings_RhoG - z_value * Siblings_SE,
+    Siblings_CI_upper = Siblings_RhoG + z_value * Siblings_SE
+  )
+
+# View the updated dataframe
+print(data)
+
+
+```
+
+```{r}
+## Reshape the data to long format for plotting and set factor levels
+ci_data <- data %>%
+  select(Frequency_comparison, 
+         Full_Pedigree_RhoG, Full_Pedigree_CI_lower, Full_Pedigree_CI_upper,
+         Parent_offspring_RhoG, Parent_offspring_CI_lower, Parent_offspring_CI_upper,
+         Siblings_RhoG, Siblings_CI_lower, Siblings_CI_upper) %>%
+  pivot_longer(
+    cols = c(Full_Pedigree_RhoG, Parent_offspring_RhoG, Siblings_RhoG), 
+    names_to = "Relation", values_to = "RhoG"
+  ) %>%
+  mutate(CI_lower = case_when(
+    Relation == "Full_Pedigree_RhoG" ~ Full_Pedigree_CI_lower,
+    Relation == "Parent_offspring_RhoG" ~ Parent_offspring_CI_lower,
+    Relation == "Siblings_RhoG" ~ Siblings_CI_lower
+  ),
+  CI_upper = case_when(
+    Relation == "Full_Pedigree_RhoG" ~ Full_Pedigree_CI_upper,
+    Relation == "Parent_offspring_RhoG" ~ Parent_offspring_CI_upper,
+    Relation == "Siblings_RhoG" ~ Siblings_CI_upper
+  )) %>%
+  mutate(Relation = recode(Relation,
+                           "Full_Pedigree_RhoG" = "All relationships",
+                           "Parent_offspring_RhoG" = "Parent-offspring",
+                           "Siblings_RhoG" = "Siblings")) %>%
+  mutate(Relation = factor(Relation, levels = c("Siblings", "Parent-offspring", "All relationships")))
+
+
+
+
+```
+
+```{r}
+# Function to create forest plot for a single frequency comparison
+plot_forest <- function(data, frequency_comparison) {
+  ggplot(data %>% filter(Frequency_comparison == frequency_comparison), 
+         aes(y = Relation, x = RhoG, xmin = CI_lower, xmax = CI_upper, 
+             linetype = Relation)) +  # Removed size aesthetic to avoid fontsize error
+    geom_pointrange(size = 0.5) +  # Set point range size manually
+    geom_vline(xintercept = 0, linetype = "dashed", color = "red") +  # Add a vertical line at x = 0
+    labs(title = paste(frequency_comparison, "(Hz)"),
+         x = "", y = "") +
+    scale_x_continuous(limits = c(-.75, 1.25)) +  # Adjust x-axis limits
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
+    theme_classic() +
+    theme(legend.position = "none",
+          panel.grid.major.x = element_line(color = "grey80", size = 0.5),  # Vertical gridlines
+          plot.title = element_text(hjust = 0.5, face = "bold"))  # Title alignment and style
+}
+
+# Create and display plots for each frequency comparison
+plots <- lapply(unique(ci_data$Frequency_comparison), function(freq) {
+  plot_forest(ci_data, freq)
+})
+
+# Print all the plots
+for (p in plots) {
+  print(p)
+}
+
+
+
+```
+
+```{r}
+plot_forest <- function(data, frequency_comparison) {
+  ggplot(data %>% filter(Frequency_comparison == frequency_comparison), 
+         aes(y = Relation, x = RhoG, xmin = CI_lower, xmax = CI_upper, 
+             linetype = Relation)) +  # Removed size aesthetic to avoid fontsize error
+    geom_pointrange(size = 0.5) +  # Set point range size manually
+    geom_vline(xintercept = 0, linetype = "dashed", color = "red") +  # Add a vertical line at x = 0
+    labs(title = paste(frequency_comparison, "(Hz)"),
+         x = "", y = "") +
+    scale_x_continuous(limits = c(-.75, 1.25)) +  # Adjust x-axis limits
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +
+    theme_classic() +
+    theme(legend.position = "none",
+          panel.grid.major.x = element_line(color = "grey80", size = 0.5),  # Vertical gridlines
+          plot.title = element_text(hjust = 0.5, face = "bold"))  # Title alignment and style
+}
+
+# Create and display plots for each frequency comparison
+plots <- lapply(unique(ci_data$Frequency_comparison), function(freq) {
+  plot_forest(ci_data, freq)
+})
+
+
+# Combine the plots into one figure using gridExtra
+combined_plot <- grid.arrange(grobs = plots, ncol = 7)  # Adjust based on your number of plots
+# Save the combined plot to a file
+ggsave("combined_RhoG.png", combined_plot, width = 30, height = 10, dpi = 300)
+
+# Display the combined plot
+print(combined_plot)
+
+```

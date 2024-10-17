@@ -1,0 +1,138 @@
+---
+title: "Environmental Correlation"
+output: "github_document"
+date: "2024-09-04"
+---
+
+```{r}
+# Load necessary libraries
+
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+library(gridExtra) 
+# Create the data frame with the new environmental variance data
+data <- data.frame(
+  Frequency_comparison = c("250|500", "250|1000", "250|2000", "250|3000", "250|4000", "250|6000", 
+                           "250|8000", "500|1000", "500|2000", "500|3000", "500|4000", "500|6000", 
+                           "500|8000", "1000|2000", "1000|3000", "1000|4000", "1000|6000", 
+                           "1000|8000", "2000|3000", "2000|4000", "2000|6000", "2000|8000", 
+                           "3000|4000", "3000|6000", "3000|8000", "4000|6000", "4000|8000", "6000|8000"),
+  
+  Full_Pedigree_RhoE = c(0.24, 0.11, 0.04, 0.02, 0.03, 0.08, 
+                         0.07, 0.22, 0.11, 0.07, 0.06, 0.10, 
+                         0.11, 0.22, 0.13, 0.09, 0.11, 
+                         0.17, 0.19, 0.12, 0.11, 0.13, 
+                         0.23, 0.10, 0.15, 0.19, 0.15, 0.20),
+  
+  Full_Pedigree_SE = c(0.05, 0.04, 0.04, 0.07, 0.07, 0.06, 
+                       0.04, 0.05, 0.07, 0.04, 0.05, 0.06, 
+                       0.06, 0.04, 0.04, 0.03, 0.03, 
+                       0.04, 0.04, 0.05, 0.06, 0.06, 
+                       0.07, 0.08, 0.09, 0.06, 0.06, 0.04),
+  
+  Parent_offspring_RhoE = c(0.22, 0.12, 0.03, 0.01, 0.03, 0.09, 
+                            0.07, 0.25, 0.11, 0.07, 0.06, 0.12, 
+                            0.12, 0.24, 0.15, 0.10, 0.13, 
+                            0.20, 0.23, 0.14, 0.11, 0.15, 
+                            0.26, 0.11, 0.17, 0.21, 0.17, 0.21),
+  
+  Parent_offspring_SE = c(0.07, 0.06, 0.07, 0.08, 0.05, 0.05, 
+                          0.06, 0.07, 0.08, 0.05, 0.06, 0.08, 
+                          0.09, 0.11, 0.10, 0.10, 0.06, 
+                          0.08, 0.07, 0.05, 0.05, 0.04, 
+                          0.06, 0.08, 0.09, 0.07, 0.06, 0.04),
+  
+  Siblings_RhoE = c(0.12, 0.09, -0.02, 0.06, 0.00, 0.11, 
+                    0.06, 0.19, 0.03, 0.05, 0.02, 0.13, 
+                    0.11, 0.14, 0.13, 0.12, 0.17, 
+                    0.22, 0.13, 0.09, 0.15, 0.13, 
+                    0.23, 0.18, 0.13, 0.20, 0.16, 0.16),
+  
+  Siblings_SE = c(0.09, 0.07, 0.07, 0.05, 0.07, 0.06, 
+                  0.08, 0.09, 0.10, 0.09, 0.08, 0.07, 
+                  0.08, 0.08, 0.07, 0.06, 0.09, 
+                  0.10, 0.08, 0.07, 0.07, 0.08, 
+                  0.06, 0.09, 0.09, 0.08, 0.09, 0.08)
+)
+
+# Calculate confidence intervals
+z_value <- 1.96  # 95% confidence level
+
+data <- data %>%
+  mutate(
+    Full_Pedigree_CI_lower = Full_Pedigree_RhoE - z_value * Full_Pedigree_SE,
+    Full_Pedigree_CI_upper = Full_Pedigree_RhoE + z_value * Full_Pedigree_SE,
+    Parent_offspring_CI_lower = Parent_offspring_RhoE - z_value * Parent_offspring_SE,
+    Parent_offspring_CI_upper = Parent_offspring_RhoE + z_value * Parent_offspring_SE,
+    Siblings_CI_lower = Siblings_RhoE - z_value * Siblings_SE,
+    Siblings_CI_upper = Siblings_RhoE + z_value * Siblings_SE
+  )
+
+# Reshape the data to long format for plotting
+ci_data <- data %>%
+  select(Frequency_comparison, 
+         Full_Pedigree_RhoE, Full_Pedigree_CI_lower, Full_Pedigree_CI_upper,
+         Parent_offspring_RhoE, Parent_offspring_CI_lower, Parent_offspring_CI_upper,
+         Siblings_RhoE, Siblings_CI_lower, Siblings_CI_upper) %>%
+  pivot_longer(
+    cols = c(Full_Pedigree_RhoE, Parent_offspring_RhoE, Siblings_RhoE), 
+    names_to = "Relation", values_to = "RhoE"
+  ) %>%
+  mutate(CI_lower = case_when(
+    Relation == "Full_Pedigree_RhoE" ~ Full_Pedigree_CI_lower,
+    Relation == "Parent_offspring_RhoE" ~ Parent_offspring_CI_lower,
+    Relation == "Siblings_RhoE" ~ Siblings_CI_lower
+  ),
+  CI_upper = case_when(
+    Relation == "Full_Pedigree_RhoE" ~ Full_Pedigree_CI_upper,
+    Relation == "Parent_offspring_RhoE" ~ Parent_offspring_CI_upper,
+    Relation == "Siblings_RhoE" ~ Siblings_CI_upper
+  )) %>%
+  mutate(Relation = recode(Relation,
+                           "Full_Pedigree_RhoE" = "Full Pedigree",
+                           "Parent_offspring_RhoE" = "Parent-offspring",
+                           "Siblings_RhoE" = "Siblings"))
+
+non_overlapping_CIs <- ci_data %>%
+  group_by(Frequency_comparison) %>%
+  summarize(
+    Full_vs_PO = !(Full_Pedigree_CI_upper >= Parent_offspring_CI_lower & Full_Pedigree_CI_lower <= Parent_offspring_CI_upper),
+    Full_vs_Siblings = !(Full_Pedigree_CI_upper >= Siblings_CI_lower & Full_Pedigree_CI_lower <= Siblings_CI_upper),
+    PO_vs_Siblings = !(Parent_offspring_CI_upper >= Siblings_CI_lower & Parent_offspring_CI_lower <= Siblings_CI_upper)
+  )
+
+# Print the result of non-overlapping CIs
+print(non_overlapping_CIs)
+```
+
+
+```{r}
+# Function to create forest plot for a single frequency comparison
+plot_forest <- function(data, frequency_comparison) {
+  ggplot(data %>% filter(Frequency_comparison == frequency_comparison), 
+         aes(x = RhoE, y = Relation, xmin = CI_lower, xmax = CI_upper, 
+             linetype = Relation, size = Relation)) +
+    geom_pointrange() +
+    coord_flip() +  # Flip axes so that CI is on the x-axis
+    labs(title = paste("Forest Plot for", frequency_comparison),
+         x = "Environmental Correlation", y = "Relationship") +
+    scale_size_manual(values = c(0.5, 0.5, 0.5)) +  # Adjust line thickness
+    scale_linetype_manual(values = c("solid", "dashed", "dotted")) +  # Different line styles
+    theme_minimal() +
+    theme(legend.position = "none")  # Hide legend for a cleaner look
+}
+
+# Create plots for each frequency comparison
+plots <- lapply(unique(ci_data$Frequency_comparison), function(freq) {
+  plot_forest(ci_data, freq)
+})
+
+# Arrange all the plots in a grid layout
+# Adjust ncol to control the number of columns
+grid_plot <- grid.arrange(grobs = plots, ncol = 3)  
+
+# Save the grid as an image
+ggsave("combinedenv__forest_plot.png", combined_plot, width = 12, height = 30, dpi = 300)
+
+
